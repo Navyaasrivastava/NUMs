@@ -1,45 +1,47 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from datetime import datetime
 
 app = FastAPI()
 
-# -------- Request Model --------
-class DOBRequest(BaseModel):
-    dob: str   # format DD-MM-YYYY
+# Input model for date of birth
+class DOB(BaseModel):
+    dob: str  # format: YYYY-MM-DD
 
-# -------- Numerology Logic --------
-def calculate_mulank(day):
-    while day > 9:
-        day = sum(int(d) for d in str(day))
-    return day
+# Home route (for testing)
+@app.get("/")
+def home():
+    return {"message": "Welcome to NUMs API! Use /mulank endpoint with your DOB."}
 
-def get_lucky_numbers(mulank):
-    lucky_map = {
-        1: [1, 10, 19, 28, 37, 46],
-        2: [2, 11, 20, 29, 38, 47],
-        3: [3, 12, 21, 30, 39, 48],
-        4: [4, 13, 22, 31, 40, 49],
-        5: [5, 14, 23, 32, 41, 50],
-        6: [6, 15, 24, 33, 42, 51],
-        7: [7, 16, 25, 34, 43, 52],
-        8: [8, 17, 26, 35, 44, 53],
-        9: [9, 18, 27, 36, 45, 54],
-    }
-    return lucky_map[mulank]
-
-# -------- API Route --------
-@app.post("/lucky-number")
-def lucky_number(request: DOBRequest):
+# Mulank route
+@app.post("/mulank")
+def get_mulank(data: DOB):
     try:
-        day = int(request.dob.split("-")[0])
-        mulank = calculate_mulank(day)
-        lucky_numbers = get_lucky_numbers(mulank)
+        dob = datetime.strptime(data.dob, "%Y-%m-%d")
+        # Mulank = sum of digits of date until 1-9
+        total = dob.day
+        while total > 9:
+            total = sum(int(d) for d in str(total))
+        mulank = total
 
-        return {
-            "dob": request.dob,
-            "mulank": mulank,
-            "lucky_numbers": lucky_numbers
+        # Example: lucky numbers for each mulank
+        lucky_numbers = {
+            1: [1, 10, 19, 28],
+            2: [2, 11, 20, 29],
+            3: [3, 12, 21, 30],
+            4: [4, 13, 22],
+            5: [5, 14, 23, 32],
+            6: [6, 15, 24],
+            7: [7, 16, 25],
+            8: [8, 17, 26],
+            9: [9, 18, 27]
         }
 
-    except:
-        return {"error": "Invalid DOB format. Use DD-MM-YYYY"}
+        return {
+            "mulank": mulank,
+            "lucky_numbers": lucky_numbers.get(mulank, [])
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
