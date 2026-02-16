@@ -3,16 +3,15 @@ from datetime import datetime
 
 app = FastAPI()
 
-# Home route
+# Home route to avoid 404
 @app.get("/")
 def home():
-    return {"message": "Welcome to NUMs API! Use /mulank endpoint with your DOB."}
+    return {"message": "Welcome to NUMs API! Use /mulank endpoint with your DOB in YYYY-MM-DD format."}
 
 # Mulank calculation route
 @app.get("/mulank")
 def mulank(dob: str):
     """
-    Pass dob in YYYY-MM-DD format.
     Example: /mulank?dob=2005-08-15
     """
     try:
@@ -20,15 +19,13 @@ def mulank(dob: str):
     except ValueError:
         return {"error": "Invalid date format. Use YYYY-MM-DD."}
 
-    # Calculate mulank (sum of digits of day)
+    # Mulank = sum of digits of day
     day = date_obj.day
     mulank = sum(int(d) for d in str(day))
-
-    # Reduce to single digit
     while mulank > 9:
         mulank = sum(int(d) for d in str(mulank))
 
-    # Lucky number = mulank + 7 (example logic)
+    # Example lucky number formula
     lucky_number = mulank + 7
 
     return {"dob": dob, "mulank": mulank, "lucky_number": lucky_number}
